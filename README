@@ -1,3 +1,5 @@
+It's a fork from http://git.spritesserver.nl/esphttpd.git 
+
 esp-httpd README
 
 This is a small but powerful webserver for ESP8266(EX) chips. Included is an example of how
