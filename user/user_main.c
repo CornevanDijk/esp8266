@@ -21,6 +21,7 @@
 #include "stdout.h"
 #include "auth.h"
 
+
 //Function that tells the authentication system what users/passwords live on the system.
 //This is disabled in the default build; if you want to try it, enable the authBasic line in
 //the builtInUrls below.
@@ -52,9 +53,8 @@ should be placed above the URLs they protect.
 HttpdBuiltInUrl builtInUrls[]={
 	{"/", cgiRedirect, "/index.tpl"},
 	{"/flash.bin", cgiReadFlash, NULL},
-	{"/led.tpl", cgiEspFsTemplate, tplLed},
-	{"/index.tpl", cgiEspFsTemplate, tplCounter},
-	{"/led.cgi", cgiLed, NULL},
+	{"/index.tpl", cgiEspFsTemplate, tplLed},
+	{"/index.cgi", cgiLed, NULL},
 
 	//Routines to make the /wifi URL and everything beneath it work.
 

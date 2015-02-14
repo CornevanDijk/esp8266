@@ -1,6 +1,6 @@
 [submodule "lib/heatshrink"]
 	path = lib/heatshrink
 	url = https://github.com/atomicobject/heatshrink.git
-[submodule "https:/github.com/themadinventor/esptool.git"]
-	path = https:/github.com/themadinventor/esptool.git
-	url = ./esptool
+[submodule "esptool"]
+	path = esptool
+	url = https://github.com/themadinventor/esptool.git

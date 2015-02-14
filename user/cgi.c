@@ -23,9 +23,7 @@ flash as a binary. Also handles the hit counter on the main page.
 #include <ip_addr.h>
 #include "espmissingincludes.h"
 
-
-//cause I can't be bothered to write an ioGetLed()
-static char currLedState=0;
+int currLedState;
 
 //Cgi that turns the LED on or off according to the 'led' param in the POST data
 int ICACHE_FLASH_ATTR cgiLed(HttpdConnData *connData) {
@@ -37,13 +35,19 @@ int ICACHE_FLASH_ATTR cgiLed(HttpdConnData *connData) {
 		return HTTPD_CGI_DONE;
 	}
 
-	len=httpdFindArg(connData->postBuff, "led", buff, sizeof(buff));
+	len=httpdFindArg(connData->postBuff, "led1", buff, sizeof(buff));
 	if (len!=0) {
 		currLedState=atoi(buff);
-		ioLed(currLedState);
+		ioLed1(currLedState);
 	}
+    
+    len=httpdFindArg(connData->postBuff, "led2", buff, sizeof(buff));
+    if (len!=0) {
+        currLedState=atoi(buff);
+        ioLed2(currLedState);
+    }
 
-	httpdRedirect(connData, "led.tpl");
+	httpdRedirect(connData, "index.tpl");
 	return HTTPD_CGI_DONE;
 }
 
@@ -55,26 +59,33 @@ void ICACHE_FLASH_ATTR tplLed(HttpdConnData *connData, char *token, void **arg) 
 	if (token==NULL) return;
 
 	os_strcpy(buff, "Unknown");
-	if (os_strcmp(token, "ledstate")==0) {
-		if (currLedState) {
-			os_strcpy(buff, "on");
+	if (os_strcmp(token, "ledstate1a")==0) {
+		if (ioGetLed1()) {
+			os_strcpy(buff, "checked");
 		} else {
-			os_strcpy(buff, "off");
+			os_strcpy(buff, "");
 		}
-	}
-	httpdSend(connData, buff, -1);
-}
-
-static long hitCounter=0;
-
-//Template code for the counter on the index page.
-void ICACHE_FLASH_ATTR tplCounter(HttpdConnData *connData, char *token, void **arg) {
-	char buff[128];
-	if (token==NULL) return;
-
-	if (os_strcmp(token, "counter")==0) {
-		hitCounter++;
-		os_sprintf(buff, "%ld", hitCounter);
+	}else
+	if (os_strcmp(token, "ledstate1b")==0) {
+		if (!ioGetLed1()) {
+			os_strcpy(buff, "checked");
+		} else {
+			os_strcpy(buff, "");
+		}
+	}else
+	if (os_strcmp(token, "ledstate2a")==0) {
+		if (ioGetLed2()) {
+			os_strcpy(buff, "checked");
+		} else {
+			os_strcpy(buff, "");
+		}
+	}else
+	if (os_strcmp(token, "ledstate2b")==0) {
+		if (!ioGetLed2()) {
+			os_strcpy(buff, "checked");
+		} else {
+			os_strcpy(buff, "");
+		}
 	}
 	httpdSend(connData, buff, -1);
 }

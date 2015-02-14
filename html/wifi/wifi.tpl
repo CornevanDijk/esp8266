@@ -1,5 +1,6 @@
 <html><head><title>WiFi connection</title>
 <link rel="stylesheet" type="text/css" href="style.css">
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=2.0;"/>
 <script type="text/javascript" src="140medley.min.js"></script>
 <script type="text/javascript">
 
