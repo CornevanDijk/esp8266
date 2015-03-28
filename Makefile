@@ -146,6 +146,7 @@ flash: $(FW_FILE_1) $(FW_FILE_2)
 
 webpages.espfs: html/ html/wifi/ mkespfsimage/mkespfsimage
 	cd html; find | ../mkespfsimage/mkespfsimage > ../webpages.espfs; cd ..
+	mv webpages.espfs firmware
 
 mkespfsimage/mkespfsimage: mkespfsimage/
 	make -C mkespfsimage
