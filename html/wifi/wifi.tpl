@@ -76,7 +76,7 @@ window.onload=function(e) {
 <body>
 <div id="main">
 <p>
-Current WiFi mode: %WiFiMode%
+<b>Current WiFi mode: %WiFiMode%</b>
 </p>
 <p>
 Note: %WiFiapwarn%
@@ -90,6 +90,25 @@ WiFi password, if applicable: <br />
 <input type="text" name="passwd" val="%WiFiPasswd%"> <br />
 <input type="submit" name="connect" value="Connect!">
 </p>
+</form>
+<form name="wifiAPform" action="configureAP.cgi" method="post">
+<b>Access Point configuration:</b><br>
+AP essid: <br />
+<input type="text" name="essid" value="%APEssid%" size="64"/> <br />
+AP password (at least 8 chars for WPA_PSK or empty then no password): <br />
+<input type="password" name="passwd" value="%APPasswd%" size="64"/> <br />
+<input type="submit" name="configure" value="Switch to AP mode">
+</p>
+</form>
+<form name="wifiAuthform" action="configureAuth.cgi" method="post">
+<b>WiFi basic auth configuration:</b><br>
+User: <br />
+<input type="text" name="authUser" value="%basicUser%" size="64"/> <br />
+Password: <br />
+<input type="password" name="authPasswd" value="%basicPasswd%" size="64" /> <br />
+<input type="submit" name="configure" value="Save user">
+</p>
+</form>
 </div>
 </body>
 </html>

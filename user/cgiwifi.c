@@ -20,6 +20,8 @@ Cgi/template routines for the /wifi url.
 #include "cgi.h"
 #include "io.h"
 #include "espmissingincludes.h"
+#include "props.h"
+
 
 //Enable this to disallow any changes in AP settings
 //#define DEMO_MODE
@@ -139,7 +141,6 @@ int ICACHE_FLASH_ATTR cgiWiFiScan(HttpdConnData *connData) {
 //Temp store for new ap info.
 static struct station_config stconf;
 
-
 //This routine is ran some time after a connection attempt to an access point. If
 //the connect succeeds, this gets the module in STA-only mode.
 static void ICACHE_FLASH_ATTR resetTimerCb(void *arg) {
@@ -147,7 +148,6 @@ static void ICACHE_FLASH_ATTR resetTimerCb(void *arg) {
 	if (x==STATION_GOT_IP) {
 		//Go to STA mode. This needs a reset, so do that.
 		os_printf("Got IP. Going into STA mode..\n");
-		wifi_set_opmode(1);
 		system_restart();
 	} else {
 		os_printf("Connect fail. Not going into STA-only mode.\n");
@@ -155,6 +155,10 @@ static void ICACHE_FLASH_ATTR resetTimerCb(void *arg) {
 	}
 }
 
+static void ICACHE_FLASH_ATTR systemRestartCb(void *arg) {
+	os_printf("Restarting ESP. (planned)\n");
+	system_restart();
+}
 //Actually connect to a station. This routine is timed because I had problems
 //with immediate connections earlier. It probably was something else that caused it,
 //but I can't be arsed to put the code back :P
@@ -174,6 +178,70 @@ static void ICACHE_FLASH_ATTR reassTimerCb(void *arg) {
 	}
 }
 
+//This cgi uses the routines above to connect to a specific access point with the
+//given ESSID using the given password.
+int ICACHE_FLASH_ATTR cgiWiFiConfigureAP(HttpdConnData *connData) {
+	char essid[128];
+	char passwd[128];
+	static ETSTimer resetTimer;
+	static struct softap_config apConfig;
+
+	if (connData->conn==NULL) {
+		//Connection aborted. Clean up.
+		return HTTPD_CGI_DONE;
+	}
+
+	httpdFindArg(connData->postBuff, "essid", essid, sizeof(essid));
+	httpdFindArg(connData->postBuff, "passwd", passwd, sizeof(passwd));
+
+	os_strncpy((char*)apConfig.ssid, essid, 32);
+	os_strncpy((char*)apConfig.password, passwd, 64);
+	if(passwd[0] != 0){
+		apConfig.authmode = AUTH_WPA_PSK;
+	}else{
+		apConfig.authmode = AUTH_OPEN;
+	}
+    apConfig.channel = 7;
+    apConfig.max_connection = 255; // 1?
+    apConfig.ssid_hidden = 0;
+
+	wifi_softap_set_config(&apConfig);
+	wifi_set_opmode(2);
+	os_printf("Reconfigure AP %s pw %s\n", apConfig.ssid, apConfig.password);
+
+	os_timer_disarm(&resetTimer);
+	os_timer_setfn(&resetTimer, systemRestartCb, NULL);
+	os_timer_arm(&resetTimer, 4000, 0);
+
+	httpdRedirect(connData, "/wifi");
+	return HTTPD_CGI_DONE;
+}
+
+int ICACHE_FLASH_ATTR cgiWiFiConfigureBasicAuth(HttpdConnData *connData) {
+	char user[64];
+	char passwd[64];
+	static ETSTimer resetTimer;
+
+	if (connData->conn==NULL) {
+		//Connection aborted. Clean up.
+		return HTTPD_CGI_DONE;
+	}
+
+	httpdFindArg(connData->postBuff, "authUser", user, sizeof(user));
+	httpdFindArg(connData->postBuff, "authPasswd", passwd, sizeof(passwd));
+
+	flash_key_value_set("user", user);
+	flash_key_value_set("password", passwd);
+
+	os_printf("Reconfigure basic auth  %s pw %s\n", user, passwd);
+
+	os_timer_disarm(&resetTimer);
+	os_timer_setfn(&resetTimer, systemRestartCb, NULL);
+	os_timer_arm(&resetTimer, 4000, 0);
+
+	httpdRedirect(connData, "/wifi");
+	return HTTPD_CGI_DONE;
+}
 
 //This cgi uses the routines above to connect to a specific access point with the
 //given ESSID using the given password.
@@ -235,8 +303,12 @@ void ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg)
 	char buff[1024];
 	int x;
 	static struct station_config stconf;
+	static struct softap_config apconf;
 	if (token==NULL) return;
 	wifi_station_get_config(&stconf);
+	wifi_softap_get_config(&apconf);
+
+	os_printf("token: %s\n", token);
 
 	os_strcpy(buff, "Unknown");
 	if (os_strcmp(token, "WiFiMode")==0) {
@@ -255,6 +327,14 @@ void ICACHE_FLASH_ATTR tplWlan(HttpdConnData *connData, char *token, void **arg)
 		} else {
 			os_strcpy(buff, "Click <a href=\"setmode.cgi?mode=2\">here</a> to go to standalone AP mode.");
 		}
+	} else if (os_strcmp(token, "APEssid")==0) {
+		os_strcpy(buff, (char*)apconf.ssid);
+	} else if (os_strcmp(token, "APPasswd")==0) {
+		os_strcpy(buff, (char*)apconf.password);
+	} else if (os_strcmp(token, "basicUser")==0) {
+		flash_key_value_get("user", buff);
+	} else if (os_strcmp(token, "basicPasswd")==0) {
+		flash_key_value_get("password", buff);
 	}
 	httpdSend(connData, buff, -1);
 }

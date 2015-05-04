@@ -20,15 +20,18 @@
 #include "cgiwifi.h"
 #include "stdout.h"
 #include "auth.h"
+#include "props.h"
 
+char savedUser[64];
+char savedPassword[64];
 
 //Function that tells the authentication system what users/passwords live on the system.
 //This is disabled in the default build; if you want to try it, enable the authBasic line in
 //the builtInUrls below.
 int myPassFn(HttpdConnData *connData, int no, char *user, int userLen, char *pass, int passLen) {
 	if (no==0) {
-		os_strcpy(user, "admin");
-		os_strcpy(pass, "s3cr3t");
+		os_strcpy(user, savedUser);
+		os_strcpy(pass, savedPassword);
 		return 1;
 //Add more users this way. Check against incrementing no for each user added.
 //	} else if (no==1) {
@@ -52,20 +55,22 @@ should be placed above the URLs they protect.
 */
 HttpdBuiltInUrl builtInUrls[]={
 	{"/", cgiRedirect, "/index.tpl"},
-	{"/flash.bin", cgiReadFlash, NULL},
+//	{"/flash.bin", cgiReadFlash, NULL},
 	{"/index.tpl", cgiEspFsTemplate, tplLed},
 	{"/index.cgi", cgiLed, NULL},
 
 	//Routines to make the /wifi URL and everything beneath it work.
 
 //Enable the line below to protect the WiFi configuration with an username/password combo.
-//	{"/wifi/*", authBasic, myPassFn},
+	{"/wifi/*", authBasic, myPassFn},
 
 	{"/wifi", cgiRedirect, "/wifi/wifi.tpl"},
 	{"/wifi/", cgiRedirect, "/wifi/wifi.tpl"},
 	{"/wifi/wifiscan.cgi", cgiWiFiScan, NULL},
 	{"/wifi/wifi.tpl", cgiEspFsTemplate, tplWlan},
 	{"/wifi/connect.cgi", cgiWiFiConnect, NULL},
+	{"/wifi/configureAP.cgi", cgiWiFiConfigureAP, NULL},
+	{"/wifi/configureAuth.cgi", cgiWiFiConfigureBasicAuth, NULL},
 	{"/wifi/setmode.cgi", cgiWifiSetMode, NULL},
 
 	{"*", cgiEspFsHook, NULL}, //Catch-all cgi function for the filesystem
@@ -73,10 +78,27 @@ HttpdBuiltInUrl builtInUrls[]={
 };
 
 
+int cgiMoreCGI(HttpdConnData *connData){
+	os_printf("No basic auth\n");
+	return HTTPD_CGI_DONE;
+}
+
+void setupBasicAuth() {
+	flash_key_value_get("user", savedUser);
+	flash_key_value_get("password", savedPassword);
+	if(savedUser[0] == 0){
+		builtInUrls[3].url = "/nourlnourl";
+		os_printf("Wifi without basic auth.\n");
+	}else{
+		os_printf("Wifi with basic auth. User: %s\n", savedUser);
+	}
+}
+
 //Main routine. Initialize stdout, the I/O and the webserver and we're done.
 void user_init(void) {
 	stdoutInit();
 	ioInit();
+	setupBasicAuth();
 	httpdInit(builtInUrls, 80);
 	os_printf("\nReady\n");
 }

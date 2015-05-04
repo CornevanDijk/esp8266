@@ -12,14 +12,14 @@ BUILD_BASE	= build
 FW_BASE		= firmware
 
 # Base directory for the compiler
-XTENSA_TOOLS_ROOT ?= /Volumes/ESPTools/esp-open-sdk/xtensa-lx106-elf/bin
+XTENSA_TOOLS_ROOT ?= /Volumes/ESPTools/crosstool-NG/builds/xtensa-lx106-elf/bin
 
 #Extra Tensilica includes from the ESS VM
-SDK_EXTRA_INCLUDES ?= /Volumes/ESPTools/esp-open-sdk/xtensa-lx106-elf/xtensa-lx106-elf/include
-SDK_EXTRA_LIBS ?= /Volumes/ESPTools/esp-open-sdk/xtensa-lx106-elf/xtensa-lx106-elf/lib
+SDK_EXTRA_INCLUDES ?= /Volumes/ESPTools/crosstool-NG/builds/xtensa-lx106-elf/xtensa-lx106-elf/include
+SDK_EXTRA_LIBS ?= /Volumes/ESPTools/crosstool-NG/builds/xtensa-lx106-elf/xtensa-lx106-elf/lib
 
 # base directory of the ESP8266 SDK package, absolute
-SDK_BASE	?= /Volumes/ESPTools/esp-open-sdk/sdk
+SDK_BASE	?= /Volumes/ESPTools/esp_iot_sdk_v1.0.0
 
 #Esptool.py path and port
 ESPTOOL		?= /Volumes/ESPTools/esp-open-sdk/esptool/esptool.py
